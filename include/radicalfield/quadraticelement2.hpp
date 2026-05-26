@@ -54,15 +54,32 @@ namespace radicalfield {
     
     public:
         //constructors
+        //QuadraticElement2<T>{(a), (b)}
+        //QuadraticElement2<T>{QuadraticElement2<S>}
+        //QuadraticElement2<T>{QuadraticElement2<T>}
+        //QuadraticElement2<T>{std::move(QuadraticElement2<T>)}
         constexpr QuadraticElement2<T>(const T& a=T{}, const T& b=T{}): _a(a), _b(b) {}
-        constexpr QuadraticElement2<T>(const QuadraticElement2<T>& other) = default; //copy
+        template<typename S>
+        constexpr QuadraticElement2<T>(const QuadraticElement2<S>& other):
+            _a(static_cast<T>(other._a)), _b(static_cast<T>(other._b)) {} //converting
+        constexpr QuadraticElement2<T>(const QuadraticElement2<T>& other) = default; //move
         constexpr QuadraticElement2<T>(QuadraticElement2<T>&& other) = default; //move
         
         //assignments
+        //QuadraticElement2<T> = S
+        //QuadraticElement2<T> = QuadraticElement2<S>
+        //QuadraticElement2<T> = QuadraticElement2<T>
+        //QuadraticElement2<T> = std::move(QuadraticElement2<T>)
         template<typename S> requires (!is_quadraticelement2_v<S>)
         constexpr QuadraticElement2<T>& operator=(const S& other) {
             _a = static_cast<T>(other);
             _b = T{};
+            return *this;
+        }
+        template<typename S>
+        constexpr QuadraticElement2<T>& operator=(const QuadraticElement2<S>& other) { //converting
+            _a = static_cast<T>(other._a);
+            _b = static_cast<T>(other._b);
             return *this;
         }
         constexpr QuadraticElement2<T>& operator=(const QuadraticElement2<T>& other) = default; //copy
@@ -82,21 +99,21 @@ namespace radicalfield {
         [[nodiscard]] constexpr bool is_rational() const {
             return !static_cast<bool>(_b);
         }
-        //bool: static_cast<bool>(QuadraticElement2<T>)
+        //static_cast<bool>(QuadraticElement2<T>)
+        //static_cast<QuadraticElement2<S>>(QuadraticElement2<T>)
+        //static_cast<S>(QuadraticElement2<T>)
+        //static_cast<F>(QuadraticElement2<T>)
         [[nodiscard]] constexpr explicit operator bool() const {
             return static_cast<bool>(_a) || static_cast<bool>(_b);
         }
-        //cast subtype: static_cast<QuadraticElement2<S>>(QuadraticElement2<T>)
-        template<typename S>
+        template<typename S> //NEVER REMOVE EXPLICIT: all binary casts would break
         [[nodiscard]] constexpr explicit operator QuadraticElement2<S>() const {
-            return QuadraticElement2<S>{static_cast<S>(_a), static_cast<S>(_b)};
+            return QuadraticElement2<S>{*this};
         }
-        //purify: static_cast<S>(QuadraticElement2<T>)
         template<typename S> requires (!is_quadraticelement2_v<S>)
         [[nodiscard]] constexpr explicit operator S() const {
             return _a;
         }
-        //float: static_cast<F>(QuadraticElement2<T>)
         template<std::floating_point F>
         [[nodiscard]] constexpr explicit operator F() const {
             return static_cast<F>(_a) + std::numbers::sqrt2_v<F> * static_cast<F>(_b);

@@ -55,24 +55,50 @@ namespace radicalfield {
     
     public:
         //constructors
+        //QuadraticElement235<T>{(a), (b2), (b3), ...}
+        //QuadraticElement235<T>{QuadraticElement235<S>}
+        //QuadraticElement235<T>{QuadraticElement235<T>}
+        //QuadraticElement235<T>{std::move(QuadraticElement235<T>)}
         constexpr QuadraticElement235<T>(
             const T& a=T{}, const T& b2=T{}, const T& b3=T{}, const T& b5=T{},
             const T& b6=T{}, const T& b10=T{}, const T& b15=T{}, const T& b30=T{}):
             _a(a), _b2(b2), _b3(b3), _b5(b5), _b6(b6), _b10(b10), _b15(b15), _b30(b30) {}
+        template<typename S>
+        constexpr QuadraticElement235<T>(const QuadraticElement235<S>& other): //converting
+            _a(static_cast<T>(other._a)), _b2(static_cast<T>(other._b2)),
+            _b3(static_cast<T>(other._b3)), _b5(static_cast<T>(other._b5)),
+            _b6(static_cast<T>(other._b6)), _b10(static_cast<T>(other._b10)),
+            _b15(static_cast<T>(other._b15)), _b30(static_cast<T>(other._b30)) {}
         constexpr QuadraticElement235<T>(const QuadraticElement235<T>& other) = default; //copy
         constexpr QuadraticElement235<T>(QuadraticElement235<T>&& other) = default; //move
         
         //assignments
+        //QuadraticElement235<T> = S
+        //QuadraticElement235<T> = QuadraticElement235<S>
+        //QuadraticElement235<T> = QuadraticElement235<T>
+        //QuadraticElement235<T> = std::move(QuadraticElement235<T>)
         template<typename S> requires (!is_quadraticelement235_v<S>)
         constexpr QuadraticElement235<T>& operator=(const S& other) {
-            _a = static_cast<T>(other);
-            _b2 = {};
-            _b3 = {};
-            _b5 = {};
-            _b6 = {};
+            _a   = static_cast<T>(other);
+            _b2  = {};
+            _b3  = {};
+            _b5  = {};
+            _b6  = {};
             _b10 = {};
             _b15 = {};
             _b30 = {};
+            return *this;
+        }
+        template<typename S>
+        constexpr QuadraticElement235<T>& operator=(const QuadraticElement235<S>& other) { //converting
+            _a   = static_cast<T>(other._a);
+            _b2  = static_cast<T>(other._b2);
+            _b3  = static_cast<T>(other._b3);
+            _b5  = static_cast<T>(other._b5);
+            _b6  = static_cast<T>(other._b6);
+            _b10 = static_cast<T>(other._b10);
+            _b15 = static_cast<T>(other._b15);
+            _b30 = static_cast<T>(other._b30);
             return *this;
         }
         constexpr QuadraticElement235<T>& operator=(const QuadraticElement235<T>& other) = default; //copy
@@ -110,7 +136,10 @@ namespace radicalfield {
                   || static_cast<bool>(_b15)
                   || static_cast<bool>(_b30));
         }
-        //bool: static_cast<bool>(QuadraticElement235<T>)
+        //static_cast<bool>(QuadraticElement235<T>)
+        //static_cast<QuadraticElement235<S>>(QuadraticElement235<T>)
+        //static_cast<S>(QuadraticElement235<T>)
+        //static_cast<F>(QuadraticElement235<T>)
         [[nodiscard]] constexpr explicit operator bool() const {
             return static_cast<bool>(_a)
                 || static_cast<bool>(_b2)
@@ -121,26 +150,14 @@ namespace radicalfield {
                 || static_cast<bool>(_b15)
                 || static_cast<bool>(_b30);
         }
-        //cast subtype: static_cast<QuadraticElement235<S>>(QuadraticElement235<T>)
-        template<typename S>
+        template<typename S> //NEVER REMOVE EXPLICIT: all binary casts would break
         [[nodiscard]] constexpr explicit operator QuadraticElement235<S>() const {
-            return QuadraticElement235<S>{
-                static_cast<S>(_a),
-                static_cast<S>(_b2),
-                static_cast<S>(_b3),
-                static_cast<S>(_b5),
-                static_cast<S>(_b6),
-                static_cast<S>(_b10),
-                static_cast<S>(_b15),
-                static_cast<S>(_b30)
-            };
+            return QuadraticElement235<S>{*this};
         }
-        //purify: static_cast<S>(QuadraticElement235<T>)
         template<typename S> requires (!is_quadraticelement235_v<S>)
         [[nodiscard]] constexpr explicit operator S() const {
             return _a;
         }
-        //float: static_cast<F>(QuadraticElement235<T>)
         template<std::floating_point F>
         [[nodiscard]] constexpr explicit operator F() const {
             return static_cast<F>(_a)
@@ -156,8 +173,8 @@ namespace radicalfield {
         
         
         //ordering
-        //                  S    == QuadraticElement235<T>
-        //QuadraticElement235<T> ==                   S
+        //                    S  == QuadraticElement235<T>
+        //QuadraticElement235<T> ==                     S
         //QuadraticElement235<S> == QuadraticElement235<T>
         template<typename S> requires (!is_quadraticelement235_v<S>)
         [[nodiscard]] friend constexpr bool operator==(const S& lhs, const QuadraticElement235<T>& rhs) {
@@ -191,7 +208,7 @@ namespace radicalfield {
             const auto c3y = y.conj3();
             const auto z   = y * c3y;    //K(sqrt(2))
             const auto c2z = z.conj2();
-            return std::make_pair(c5*c3y*c2z, static_cast<T>(z*c2z));
+            return std::make_pair(c5*c3y*c2z, (z*c2z).a());
         }
         
         [[nodiscard]] constexpr auto conj() const {
@@ -269,10 +286,9 @@ namespace radicalfield {
         }
         
         [[nodiscard]] constexpr auto norm() const {
-            auto n = *this * conj5();
-            n *= n.conj3();
-            n *= n.conj2();
-            return n.a();
+            const auto y = *this * conj5();
+            const auto z = y * y.conj3();
+            return (z*z.conj2()).a();
         }
         
         
