@@ -1,12 +1,12 @@
-#ifndef RADICALFIELDPP_QUADRATICELEMENT235_HPP
-#define RADICALFIELDPP_QUADRATICELEMENT235_HPP
+#ifndef RADICALFIELD_QUADRATICELEMENT235_HPP
+#define RADICALFIELD_QUADRATICELEMENT235_HPP
 
 
 
 #include <type_traits> //is_floating_point_v
 #include <numbers>     //sqrt2_v
 //#include <compare>     //strong_ordering
-//#include <cmath>       //std::abs
+#include <cmath>       //std::abs, std::sqrt
 #include <ostream>     //ostream
 #include <utility>     //std::pair
 
@@ -25,6 +25,24 @@ namespace radicalfield {
     
     
     
+    /**
+     * Element of the quadratic rationals $\mathbb{K}\left(\sqrt{2}, \sqrt{3}, \sqrt{5}\right)$.
+     * 
+     * An instance represents an exact rational extension element of the form
+     * 
+     * $$
+     *     a+b_2\sqrt{2}+b_3\sqrt{3}+b_5\sqrt{5}+b_6\sqrt{6}+b_{10}\sqrt{10}+b_{15}\sqrt{15}+b_{30}\sqrt{30} \qquad a, b_2, b_3, b_5, b_6, b_{10}, b_{15}, b_{30}\in\mathbb{K}
+     * $$
+     * 
+     * where $\mathbb{K}$ is expected to be an integral ($\mathbb{Z}$)
+     * or rational type ($\mathbb{Q}$).
+     * 
+     * The class is intended to behave similarly to complex<T>,
+     * but additionally support mixed type operations and behave like their
+     * coefficient types (QuadraticElement235<int> + QuadraticElement235<long> = QuadraticElement235<long>).
+     * 
+     * [Wikipedia - Quadratic integers](https://en.wikipedia.org/wiki/Quadratic_integer)
+     */
     template<typename T=int>
     class QuadraticElement235 : public quadraticelement235_tag {
     private:
@@ -36,13 +54,15 @@ namespace radicalfield {
     
     
     public:
+        //constructors
         constexpr QuadraticElement235<T>(
-            const T& a={}, const T& b2={}, const T& b3={}, const T& b5={},
-            const T& b6={}, const T& b10={}, const T& b15={}, const T& b30={}):
+            const T& a=T{}, const T& b2=T{}, const T& b3=T{}, const T& b5=T{},
+            const T& b6=T{}, const T& b10=T{}, const T& b15=T{}, const T& b30=T{}):
             _a(a), _b2(b2), _b3(b3), _b5(b5), _b6(b6), _b10(b10), _b15(b15), _b30(b30) {}
         constexpr QuadraticElement235<T>(const QuadraticElement235<T>& other) = default; //copy
         constexpr QuadraticElement235<T>(QuadraticElement235<T>&& other) = default; //move
         
+        //assignments
         template<typename S>
         constexpr QuadraticElement235<T>& operator=(const S& other) requires (!is_quadraticelement235_v<S>) {
             _a = static_cast<T>(other);
@@ -81,6 +101,16 @@ namespace radicalfield {
         
         
         //conversion
+        [[nodiscard]] constexpr bool is_rational() const {
+            return !(static_cast<bool>(_b2)
+                  || static_cast<bool>(_b3)
+                  || static_cast<bool>(_b5)
+                  || static_cast<bool>(_b6)
+                  || static_cast<bool>(_b10)
+                  || static_cast<bool>(_b15)
+                  || static_cast<bool>(_b30));
+        }
+        //bool: static_cast<bool>(QuadraticElement235<T>)
         explicit constexpr operator bool() const {
             return static_cast<bool>(_a)
                 || static_cast<bool>(_b2)
@@ -91,17 +121,7 @@ namespace radicalfield {
                 || static_cast<bool>(_b15)
                 || static_cast<bool>(_b30);
         }
-        
-        [[nodiscard]] constexpr bool is_rational() const {
-            return !(static_cast<bool>(_b2)
-                  || static_cast<bool>(_b3)
-                  || static_cast<bool>(_b5)
-                  || static_cast<bool>(_b6)
-                  || static_cast<bool>(_b10)
-                  || static_cast<bool>(_b15)
-                  || static_cast<bool>(_b30));
-        }
-        
+        //cast subtype: static_cast<QuadraticElement235<S>>(QuadraticElement235<T>)
         template<typename S>
         explicit constexpr operator QuadraticElement235<S>() const {
             return QuadraticElement235<S>{
@@ -115,10 +135,12 @@ namespace radicalfield {
                 static_cast<S>(_b30)
             };
         }
+        //purify: static_cast<S>(QuadraticElement235<T>)
         template<typename S>
         explicit constexpr operator S() const requires (!is_quadraticelement235_v<S>) {
             return _a;
         }
+        //float: static_cast<F>(QuadraticElement235<T>)
         template<std::floating_point F>
         explicit constexpr operator F() const {
             return static_cast<F>(_a)
@@ -134,13 +156,16 @@ namespace radicalfield {
         
         
         //ordering
-        template<typename S>
-        friend constexpr bool operator==(const QuadraticElement235<T>& lhs, const S& rhs) requires (!is_quadraticelement235_v<S>) {
-            return lhs.is_rational() && lhs._a==rhs;
-        }
+        //                  S    == QuadraticElement235<T>
+        //QuadraticElement235<T> ==                   S
+        //QuadraticElement235<S> == QuadraticElement235<T>
         template<typename S>
         friend constexpr bool operator==(const S& lhs, const QuadraticElement235<T>& rhs) requires (!is_quadraticelement235_v<S>) {
             return lhs==rhs._a && rhs.is_rational();
+        }
+        template<typename S>
+        friend constexpr bool operator==(const QuadraticElement235<T>& lhs, const S& rhs) requires (!is_quadraticelement235_v<S>) {
+            return lhs._a==rhs && lhs.is_rational();
         }
         template<typename S>
         friend constexpr bool operator==(const QuadraticElement235<T>& lhs, const QuadraticElement235<S>& rhs) {
@@ -160,20 +185,25 @@ namespace radicalfield {
         //arithmetic
         
         //conjugation & norm
-        constexpr std::pair<QuadraticElement235<T>, T> conj_and_norm() const {
-            const QuadraticElement235<T> c5  = conj5();
-            const QuadraticElement235<T> y   = *this * c5;
-            const QuadraticElement235<T> c3y = y.conj3();
-            const QuadraticElement235<T> z   = y * c3y;
-            const QuadraticElement235<T> c2z = z.conj2();
-            return {c5*c3y*c2z, static_cast<T>(z*c2z)};
+        constexpr auto conj_and_norm() const {
+            const auto c5  = conj5();
+            const auto y   = *this * c5; //K(sqrt(2), sqrt(3))
+            const auto c3y = y.conj3();
+            const auto z   = y * c3y;    //K(sqrt(2))
+            const auto c2z = z.conj2();
+            return std::make_pair(c5*c3y*c2z, static_cast<T>(z*c2z));
         }
         
-        [[nodiscard]] constexpr QuadraticElement235<T> conj() const {
+        [[nodiscard]] constexpr auto conj() const {
             return conj_and_norm().first;
         }
-        constexpr QuadraticElement235<T> conj2() const {
-            return QuadraticElement235<T>{+_a,
+        constexpr QuadraticElement235<T>& iconj() { //just for consistency with QuadraticElement2
+            *this = (*this).conj();
+            return *this;
+        }
+        constexpr auto conj2() const {
+            using R = decltype((+std::declval<T>()) + (-std::declval<T>()));
+            return QuadraticElement235<R>{+_a,
                                           -_b2,
                                           +_b3,
                                           +_b5,
@@ -182,8 +212,9 @@ namespace radicalfield {
                                           +_b15,
                                           -_b30};
         }
-        constexpr QuadraticElement235<T> conj3() const {
-            return QuadraticElement235<T>{+_a,
+        constexpr auto conj3() const {
+            using R = decltype((+std::declval<T>()) + (-std::declval<T>()));
+            return QuadraticElement235<R>{+_a,
                                           +_b2,
                                           -_b3,
                                           +_b5,
@@ -192,8 +223,9 @@ namespace radicalfield {
                                           -_b15,
                                           -_b30};
         }
-        constexpr QuadraticElement235<T> conj5() const {
-            return QuadraticElement235<T>{+_a,
+        constexpr auto conj5() const {
+            using R = decltype((+std::declval<T>()) + (-std::declval<T>()));
+            return QuadraticElement235<R>{+_a,
                                           +_b2,
                                           +_b3,
                                           -_b5,
@@ -236,13 +268,20 @@ namespace radicalfield {
             return *this;
         }
         
-        [[nodiscard]] constexpr T norm() const {
-            return conj_and_norm().second;
+        [[nodiscard]] constexpr auto norm() const {
+            auto n = *this * conj5();
+            n *= n.conj3();
+            n *= n.conj2();
+            return n.a();
         }
         
+        
         //unary
-        constexpr QuadraticElement235<T> operator+() const {
-            return QuadraticElement235<T>{+_a,
+        //+QuadraticElement235<T>
+        // QuadraticElement235<T>.ipos()
+        constexpr auto operator+() const {
+            using R = decltype(+std::declval<T>());
+            return QuadraticElement235<R>{+_a,
                                           +_b2,
                                           +_b3,
                                           +_b5,
@@ -263,8 +302,11 @@ namespace radicalfield {
             return *this;
         }
         
-        constexpr QuadraticElement235<T> operator-() const {
-            return QuadraticElement235<T>{-_a,
+        //-QuadraticElement235<T>
+        // QuadraticElement235<T>.ineg()
+        constexpr auto operator-() const {
+            using R = decltype(-std::declval<T>());
+            return QuadraticElement235<R>{-_a,
                                           -_b2,
                                           -_b3,
                                           -_b5,
@@ -285,7 +327,10 @@ namespace radicalfield {
             return *this;
         }
         
+        
         //addition
+        //++QuadraticElement235<T>
+        //  QuadraticElement235<T>++
         constexpr QuadraticElement235<T>& operator++() {
             ++_a;
             return *this;
@@ -295,6 +340,9 @@ namespace radicalfield {
             ++(*this);
             return tmp;
         }
+        
+        //QuadraticElement235<T> +=                     S
+        //QuadraticElement235<T> += QuadraticElement235<S>
         template<typename S>
         constexpr QuadraticElement235<T>& operator+=(const S& rhs) requires (!is_quadraticelement235_v<S>) {
             _a += rhs;
@@ -312,18 +360,22 @@ namespace radicalfield {
             _b30 += rhs._b30;
             return *this;
         }
+        
+        //                    S  + QuadraticElement235<T>
+        //QuadraticElement235<T> +                     S
+        //QuadraticElement235<S> + QuadraticElement235<T>
         template<typename S>
         friend constexpr auto operator+(const S& lhs, const QuadraticElement235<T>& rhs) requires (!is_quadraticelement235_v<S>) {
             using R = decltype(lhs + std::declval<T>());
             return QuadraticElement235<R>{
-                         lhs + rhs._a,
-                static_cast<R>(rhs._b2),
-                static_cast<R>(rhs._b3),
-                static_cast<R>(rhs._b5),
-                static_cast<R>(rhs._b6),
-                static_cast<R>(rhs._b10),
-                static_cast<R>(rhs._b15),
-                static_cast<R>(rhs._b30)
+                lhs +                rhs._a,
+                    + static_cast<R>(rhs._b2),
+                    + static_cast<R>(rhs._b3),
+                    + static_cast<R>(rhs._b5),
+                    + static_cast<R>(rhs._b6),
+                    + static_cast<R>(rhs._b10),
+                    + static_cast<R>(rhs._b15),
+                    + static_cast<R>(rhs._b30)
             };
         }
         template<typename S>
@@ -355,7 +407,10 @@ namespace radicalfield {
             };
         }
         
+        
         //subtraction
+        //--QuadraticElement235<T>
+        //  QuadraticElement235<T>--
         constexpr QuadraticElement235<T>& operator--() {
             --_a;
             return *this;
@@ -365,6 +420,9 @@ namespace radicalfield {
             --(*this);
             return tmp;
         }
+        
+        //QuadraticElement235<T> -=                     S
+        //QuadraticElement235<T> -= QuadraticElement235<S>
         template<typename S>
         constexpr QuadraticElement235<T>& operator-=(const S& rhs) requires (!is_quadraticelement235_v<S>) {
             _a -= rhs;
@@ -382,18 +440,22 @@ namespace radicalfield {
             _b30 -= rhs._b30;
             return *this;
         }
+        
+        //                    S  - QuadraticElement235<T>
+        //QuadraticElement235<T> -                     S
+        //QuadraticElement235<S> - QuadraticElement235<T>
         template<typename S>
         friend constexpr auto operator-(const S& lhs, const QuadraticElement235<T>& rhs) requires (!is_quadraticelement235_v<S>) {
             using R = decltype(lhs - std::declval<T>());
             return QuadraticElement235<R>{
-                          lhs - rhs._a,
-                -static_cast<R>(rhs._b2),
-                -static_cast<R>(rhs._b3),
-                -static_cast<R>(rhs._b5),
-                -static_cast<R>(rhs._b6),
-                -static_cast<R>(rhs._b10),
-                -static_cast<R>(rhs._b15),
-                -static_cast<R>(rhs._b30)
+                lhs -                rhs._a,
+                    - static_cast<R>(rhs._b2),
+                    - static_cast<R>(rhs._b3),
+                    - static_cast<R>(rhs._b5),
+                    - static_cast<R>(rhs._b6),
+                    - static_cast<R>(rhs._b10),
+                    - static_cast<R>(rhs._b15),
+                    - static_cast<R>(rhs._b30)
             };
         }
         template<typename S>
@@ -425,7 +487,10 @@ namespace radicalfield {
             };
         }
         
+        
         //multiplication
+        //QuadraticElement235<T> *=                     S
+        //QuadraticElement235<T> *= QuadraticElement235<S>
         template<typename S>
         constexpr QuadraticElement235<T>& operator*=(const S& rhs) requires (!is_quadraticelement235_v<S>) {
             _a   *= rhs;
@@ -440,18 +505,13 @@ namespace radicalfield {
         }
         template<typename S>
         constexpr QuadraticElement235<T>& operator*=(const QuadraticElement235<S>& rhs) {
-            const T a  = _a,  b2  = _b2,  b3  = _b3,  b5  = _b5;
-            const T b6 = _b6, b10 = _b10, b15 = _b15, b30 = _b30;
-            _a   = a*rhs._a   + 2*b2 *rhs._b2 + 3*b3 *rhs._b3  + 5*b5 *rhs._b5  + 6* b6*rhs._b6  + 10*b10*rhs._b10 + 15* b15*rhs._b15 + 30*b30*rhs._b30;
-            _b2  = a*rhs._b2  +   b2 *rhs._a  + 3*(b3*rhs._b6  +   b6 *rhs._b3) + 5*(b5*rhs._b10 +    b10*rhs._b5) + 15*(b15*rhs._b30 +    b30*rhs._b15);
-            _b3  = a*rhs._b3  +   b3 *rhs._a  + 2*(b2*rhs._b6  +   b6 *rhs._b2) + 5*(b5*rhs._b15 +    b15*rhs._b5) + 10*(b10*rhs._b30 +    b30*rhs._b10);
-            _b5  = a*rhs._b5  +   b5 *rhs._a  + 2*(b2*rhs._b10 +   b10*rhs._b2) + 3*(b3*rhs._b15 +    b15*rhs._b3) +  6*(b6 *rhs._b30 +    b30*rhs._b6);
-            _b6  = a*rhs._b6  +   b6 *rhs._a  +    b2*rhs._b3  +   b3 *rhs._b2  + 5*(b5*rhs._b30 +    b30*rhs._b5  +     b10*rhs._b15 +    b15*rhs._b10);
-            _b10 = a*rhs._b10 +   b10*rhs._a  +    b2*rhs._b5  +   b5 *rhs._b2  + 3*(b3*rhs._b30 +    b30*rhs._b3  +     b6 *rhs._b15 +    b15*rhs._b6);
-            _b15 = a*rhs._b15 +   b15*rhs._a  +    b3*rhs._b5  +   b5 *rhs._b3  + 2*(b2*rhs._b30 +    b30*rhs._b2  +     b6 *rhs._b10 +    b10*rhs._b6);
-            _b30 = a*rhs._b30 +   b30*rhs._a  +    b2*rhs._b15 +   b15*rhs._b2  +    b3*rhs._b10 +    b10*rhs._b3  +     b5 *rhs._b6  +    b6 *rhs._b5;
+            *this = *this * rhs;
             return *this;
         }
+        
+        //                    S  * QuadraticElement235<T>
+        //QuadraticElement235<T> *                     S
+        //QuadraticElement235<S> * QuadraticElement235<T>
         template<typename S>
         friend constexpr auto operator*(const S& lhs, const QuadraticElement235<T>& rhs) requires (!is_quadraticelement235_v<S>) {
             using R = decltype(lhs * std::declval<T>());
@@ -495,10 +555,20 @@ namespace radicalfield {
         }
         
         //inversion & division
+        //for division by a QuadraticElement235<T> y always do
+        //y / x = y * x.conj() / x.norm() = (y * x.conj()) / x.norm()
+        //the multiplication first to avoid early cancellation/truncation
         constexpr QuadraticElement235<T> inv() const {
             const auto [adj, nrm] = conj_and_norm();
             return adj / nrm;
         }
+        constexpr QuadraticElement235<T>& iinv() { //just for consistency with QuadraticElement2
+            *this = (*this).inv();
+            return *this;
+        }
+        
+        //QuadraticElement235<T> /=                     S
+        //QuadraticElement235<T> /= QuadraticElement235<S>
         template<typename S>
         constexpr QuadraticElement235<T>& operator/=(const S& rhs) requires (!is_quadraticelement235_v<S>) {
             _a   /= rhs;
@@ -518,6 +588,10 @@ namespace radicalfield {
             *this /= nrm;
             return *this;
         }
+        
+        //                    S  / QuadraticElement235<T>
+        //QuadraticElement235<T> /                     S
+        //QuadraticElement235<S> / QuadraticElement235<T>
         template<typename S>
         friend constexpr auto operator/(const S& lhs, const QuadraticElement235<T>& rhs) requires (!is_quadraticelement235_v<S>) {
             const auto [adj, nrm] = rhs.conj_and_norm();
@@ -547,43 +621,19 @@ namespace radicalfield {
         
         //IO
         friend std::ostream& operator<<(std::ostream& os, const QuadraticElement235& x) {
+            const std::ios_base::fmtflags old_flags = os.flags();
             os << x._a;
             
-            if(x._b2 >= 0) {
-                os << '+';
-            }
-            os << x._b2 << "sqrt(" << 2 << ')';
+            os << std::showpos;
+            os << x._b2 << "sqrt(2)";
+            os << x._b3 << "sqrt(3)";
+            os << x._b5 << "sqrt(5)";
+            os << x._b6 << "sqrt(6)";
+            os << x._b10 << "sqrt(10)";
+            os << x._b15 << "sqrt(15)";
+            os << x._b30 << "sqrt(30)";
             
-            if(x._b3 >= 0) {
-                os << '+';
-            }
-            os << x._b3 << "sqrt(" << 3 << ')';
-            
-            if(x._b5 >= 0) {
-                os << '+';
-            }
-            os << x._b5 << "sqrt(" << 5 << ')';
-            
-            if(x._b6 >= 0) {
-                os << '+';
-            }
-            os << x._b6 << "sqrt(" << 6 << ')';
-            
-            if(x._b10 >= 0) {
-                os << '+';
-            }
-            os << x._b10 << "sqrt(" << 10 << ')';
-            
-            if(x._b15 >= 0) {
-                os << '+';
-            }
-            os << x._b15 << "sqrt(" << 15 << ')';
-            
-            if(x._b30 >= 0) {
-                os << '+';
-            }
-            os << x._b30 << "sqrt(" << 30 << ')';
-            
+            os.flags(old_flags);
             return os;
         }
     };
@@ -594,4 +644,4 @@ namespace radicalfield {
 
 
 
-#endif //RADICALFIELDPP_QUADRATICELEMENT235_HPP
+#endif //RADICALFIELD_QUADRATICELEMENT235_HPP
