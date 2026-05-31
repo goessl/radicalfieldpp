@@ -214,10 +214,6 @@ namespace radicalfield {
         [[nodiscard]] constexpr auto conj() const {
             return conj_and_norm().first;
         }
-        constexpr QuadraticElement235<T>& iconj() { //just for consistency with QuadraticElement2
-            *this = (*this).conj();
-            return *this;
-        }
         [[nodiscard]] constexpr auto conj2() const {
             using R = decltype((+std::declval<T>()) + (-std::declval<T>()));
             return QuadraticElement235<R>{+_a,
@@ -252,36 +248,78 @@ namespace radicalfield {
                                           -_b30};
         }
         constexpr QuadraticElement235<T>& iconj2() {
-            _a   = +_a;
-            _b2  = -_b2;
-            _b3  = +_b3;
-            _b5  = +_b5;
-            _b6  = -_b6;
-            _b10 = -_b10;
-            _b15 = +_b15;
-            _b30 = -_b30;
+            if constexpr (requires { std::declval<T>().ipos(); }) {
+                _a.ipos();
+                _b3.ipos();
+                _b5.ipos();
+                _b15.ipos();
+            } else {
+                _a   = +_a;
+                _b3  = +_b3;
+                _b5  = +_b5;
+                _b15 = +_b15;
+            }
+            if constexpr (requires { std::declval<T>().ineg(); }) {
+                _b2.ineg();
+                _b6.ineg();
+                _b10.ineg();
+                _b30.ineg();
+            } else {
+                _b2  = -_b2;
+                _b6  = -_b6;
+                _b10 = -_b10;
+                _b30 = -_b30;
+            }
             return *this;
         }
         constexpr QuadraticElement235<T>& iconj3() {
-            _a   = +_a;
-            _b2  = +_b2;
-            _b3  = -_b3;
-            _b5  = +_b5;
-            _b6  = -_b6;
-            _b10 = +_b10;
-            _b15 = -_b15;
-            _b30 = -_b30;
+            if constexpr (requires { std::declval<T>().ipos(); }) {
+                _a.ipos();
+                _b2.ipos();
+                _b5.ipos();
+                _b10.ipos();
+            } else {
+                _a   = +_a;
+                _b2  = +_b2;
+                _b5  = +_b5;
+                _b10 = +_b10;
+            }
+            if constexpr (requires { std::declval<T>().ineg(); }) {
+                _b3.ineg();
+                _b6.ineg();
+                _b15.ineg();
+                _b30.ineg();
+            } else {
+                _b3  = -_b3;
+                _b6  = -_b6;
+                _b15 = -_b15;
+                _b30 = -_b30;
+            }
             return *this;
         }
         constexpr QuadraticElement235<T>& iconj5() {
-            _a   = +_a;
-            _b2  = +_b2;
-            _b3  = +_b3;
-            _b5  = -_b5;
-            _b6  = +_b6;
-            _b10 = -_b10;
-            _b15 = -_b15;
-            _b30 = -_b30;
+            if constexpr (requires { std::declval<T>().ipos(); }) {
+                _a.ipos();
+                _b2.ipos();
+                _b3.ipos();
+                _b6.ipos();
+            } else {
+                _a   = +_a;
+                _b2  = +_b2;
+                _b3  = +_b3;
+                _b6  = +_b6;
+            }
+            if constexpr (requires { std::declval<T>().ineg(); }) {
+                _b5.ineg();
+                _b10.ineg();
+                _b15.ineg();
+                _b30.ineg();
+            } else {
+                _b5  = -_b5;
+                _b10 = -_b10;
+                _b15 = -_b15;
+                _b30 = -_b30;
+            }
             return *this;
         }
         
@@ -307,14 +345,25 @@ namespace radicalfield {
                                           +_b30};
         }
         constexpr QuadraticElement235<T>& ipos() {
-            _a   = +_a;
-            _b2  = +_b2;
-            _b3  = +_b3;
-            _b5  = +_b5;
-            _b6  = +_b6;
-            _b10 = +_b10;
-            _b15 = +_b15;
-            _b30 = +_b30;
+            if constexpr (requires { std::declval<T>().ipos(); }) {
+                _a.ipos();
+                _b2.ipos();
+                _b3.ipos();
+                _b5.ipos();
+                _b6.ipos();
+                _b10.ipos();
+                _b15.ipos();
+                _b30.ipos();
+            } else {
+                _a   = +_a;
+                _b2  = +_b2;
+                _b3  = +_b3;
+                _b5  = +_b5;
+                _b6  = +_b6;
+                _b10 = +_b10;
+                _b15 = +_b15;
+                _b30 = +_b30;
+            }
             return *this;
         }
         
@@ -332,14 +381,25 @@ namespace radicalfield {
                                           -_b30};
         }
         constexpr QuadraticElement235<T>& ineg() {
-            _a   = -_a;
-            _b2  = -_b2;
-            _b3  = -_b3;
-            _b5  = -_b5;
-            _b6  = -_b6;
-            _b10 = -_b10;
-            _b15 = -_b15;
-            _b30 = -_b30;
+            if constexpr (requires { std::declval<T>().ineg(); }) {
+                _a.ineg();
+                _b2.ineg();
+                _b3.ineg();
+                _b5.ineg();
+                _b6.ineg();
+                _b10.ineg();
+                _b15.ineg();
+                _b30.ineg();
+            } else {
+                _a   = -_a;
+                _b2  = -_b2;
+                _b3  = -_b3;
+                _b5  = -_b5;
+                _b6  = -_b6;
+                _b10 = -_b10;
+                _b15 = -_b15;
+                _b30 = -_b30;
+            }
             return *this;
         }
         
@@ -577,10 +637,6 @@ namespace radicalfield {
         [[nodiscard]] constexpr QuadraticElement235<T> inv() const {
             const auto [adj, nrm] = conj_and_norm();
             return adj / nrm;
-        }
-        constexpr QuadraticElement235<T>& iinv() { //just for consistency with QuadraticElement2
-            *this = (*this).inv();
-            return *this;
         }
         
         //QuadraticElement235<T> /=                     S

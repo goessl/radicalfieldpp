@@ -187,8 +187,16 @@ namespace radicalfield {
                                         -_b};
         }
         constexpr QuadraticElement2<T>& iconj() {
-            _a = +_a;
-            _b = -_b;
+            if constexpr (requires { _a.ipos(); }) {
+                _a.ipos();
+            } else {
+                _a = +_a;
+            }
+            if constexpr (requires { _b.ineg(); }) {
+                _b.ineg();
+            } else {
+                _b = -_b;
+            }
             return *this;
         }
         
@@ -206,8 +214,13 @@ namespace radicalfield {
                                         +_b};
         }
         constexpr QuadraticElement2<T>& ipos() {
-            _a = +_a;
-            _b = +_b;
+            if constexpr (requires { std::declval<T>().ipos(); }) {
+                _a.ipos();
+                _b.ipos();
+            } else {
+                _a = +_a;
+                _b = +_b;
+            }
             return *this;
         }
         
@@ -219,8 +232,13 @@ namespace radicalfield {
                                         -_b};
         }
         constexpr QuadraticElement2<T>& ineg() {
-            _a = -_a;
-            _b = -_b;
+            if constexpr (requires { std::declval<T>().ineg(); }) {
+                _a.ineg();
+                _b.ineg();
+            } else {
+                _a = -_a;
+                _b = -_b;
+            }
             return *this;
         }
         
