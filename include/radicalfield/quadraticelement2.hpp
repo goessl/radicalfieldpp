@@ -62,7 +62,7 @@ namespace radicalfield {
         template<typename S>
         constexpr QuadraticElement2<T>(const QuadraticElement2<S>& other):
             _a(static_cast<T>(other._a)), _b(static_cast<T>(other._b)) {} //converting
-        constexpr QuadraticElement2<T>(const QuadraticElement2<T>& other) = default; //move
+        constexpr QuadraticElement2<T>(const QuadraticElement2<T>& other) = default; //copy
         constexpr QuadraticElement2<T>(QuadraticElement2<T>&& other) = default; //move
         
         //assignments
@@ -187,12 +187,12 @@ namespace radicalfield {
                                         -_b};
         }
         constexpr QuadraticElement2<T>& iconj() {
-            if constexpr (requires { _a.ipos(); }) {
+            if constexpr (requires { std::declval<T>().ipos(); }) {
                 _a.ipos();
             } else {
                 _a = +_a;
             }
-            if constexpr (requires { _b.ineg(); }) {
+            if constexpr (requires { std::declval<T>().ineg(); }) {
                 _b.ineg();
             } else {
                 _b = -_b;
@@ -432,10 +432,24 @@ namespace radicalfield {
         
         
         //IO
-        friend std::ostream& operator<<(std::ostream& os, const QuadraticElement2& x) {
+        friend std::ostream& operator<<(std::ostream& os, const QuadraticElement2<T>& x) {
             const std::ios_base::fmtflags old_flags = os.flags();
-            os << x._a;
-            os << std::showpos << x._b << "sqrt(2)";
+            os << x._a << std::showpos << x._b << "sqrt(2)";
+            os.flags(old_flags);
+            return os;
+        }
+        
+        friend std::ostream& pretty_print(std::ostream& os, const QuadraticElement2<T>& x) {
+            const std::ios_base::fmtflags old_flags = os.flags();
+            if(static_cast<bool>(x._a) && static_cast<bool>(x._b)) {
+                os << x._a << std::showpos << x._b << "\u221A2";
+            } else if(static_cast<bool>(x._a)) {
+                os << x._a;
+            } else if(static_cast<bool>(x._b)) {
+                os << x._b << "\u221A2";
+            } else {
+                os << '0';
+            }
             os.flags(old_flags);
             return os;
         }

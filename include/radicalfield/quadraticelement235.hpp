@@ -694,8 +694,8 @@ namespace radicalfield {
         //IO
         friend std::ostream& operator<<(std::ostream& os, const QuadraticElement235& x) {
             const std::ios_base::fmtflags old_flags = os.flags();
-            os << x._a;
             
+            os << x._a;
             os << std::showpos;
             os << x._b2 << "sqrt(2)";
             os << x._b3 << "sqrt(3)";
@@ -704,6 +704,72 @@ namespace radicalfield {
             os << x._b10 << "sqrt(10)";
             os << x._b15 << "sqrt(15)";
             os << x._b30 << "sqrt(30)";
+            
+            os.flags(old_flags);
+            return os;
+        }
+        
+        friend std::ostream& pretty_print(std::ostream& os, const QuadraticElement235<T>& x) {
+            const std::ios_base::fmtflags old_flags = os.flags();
+            
+            bool printed = false;
+            if(static_cast<bool>(x._a)) {
+                os << x._a;
+                printed = true;
+            }
+            if(static_cast<bool>(x._b2)) {
+                if(printed) {
+                    os << std::showpos;
+                }
+                os << x._b2 << "\u221A2";
+                printed = true;
+            }
+            if(static_cast<bool>(x._b3)) {
+                if(printed) {
+                    os << std::showpos;
+                }
+                os << x._b3 << "\u221A3";
+                printed = true;
+            }
+            if(static_cast<bool>(x._b5)) {
+                if(printed) {
+                    os << std::showpos;
+                }
+                os << x._b5 << "\u221A5";
+                printed = true;
+            }
+            if(static_cast<bool>(x._b6)) {
+                if(printed) {
+                    os << std::showpos;
+                }
+                os << x._b6 << "\u221A6";
+                printed = true;
+            }
+            if(static_cast<bool>(x._b10)) {
+                if(printed) {
+                    os << std::showpos;
+                }
+                os << x._b10 << "\u221A10";
+                printed = true;
+            }
+            if(static_cast<bool>(x._b15)) {
+                if(printed) {
+                    os << std::showpos;
+                }
+                os << x._b15 << "\u221A15";
+                printed = true;
+            }
+            if(static_cast<bool>(x._b30)) {
+                if(printed) {
+                    os << std::showpos;
+                }
+                os << x._b30 << "\u221A30";
+                printed = true;
+            }
+            
+            if(!printed) {
+                os << '0';
+            }
             
             os.flags(old_flags);
             return os;
