@@ -6,7 +6,7 @@
 #include <type_traits> //is_floating_point_v
 #include <numbers>     //sqrt2_v
 //#include <compare>     //strong_ordering
-#include <cmath>       //abs, sqrt
+#include <cmath>       //sqrt
 #include <utility>     //pair
 #include <ostream>     //ostream
 
@@ -150,13 +150,13 @@ namespace radicalfield {
                 || static_cast<bool>(_b15)
                 || static_cast<bool>(_b30);
         }
-        template<typename S> //NEVER REMOVE EXPLICIT: all binary casts would break
+        template<typename S> //NEVER REMOVE EXPLICIT: all binary operator templates would break
         [[nodiscard]] constexpr explicit operator QuadraticElement235<S>() const {
             return QuadraticElement235<S>{*this};
         }
-        template<typename S> requires (!is_quadraticelement235_v<S>)
+        template<typename S> requires (!is_quadraticelement235_v<S> && std::is_constructible_v<S, T>)
         [[nodiscard]] constexpr explicit operator S() const {
-            return _a;
+            return static_cast<S>(_a);
         }
         template<std::floating_point F>
         [[nodiscard]] constexpr explicit operator F() const {

@@ -106,13 +106,13 @@ namespace radicalfield {
         [[nodiscard]] constexpr explicit operator bool() const {
             return static_cast<bool>(_a) || static_cast<bool>(_b);
         }
-        template<typename S> //NEVER REMOVE EXPLICIT: all binary casts would break
+        template<typename S> //NEVER REMOVE EXPLICIT: all binary operator templates would break
         [[nodiscard]] constexpr explicit operator QuadraticElement2<S>() const {
             return QuadraticElement2<S>{*this};
         }
-        template<typename S> requires (!is_quadraticelement2_v<S>)
+        template<typename S> requires (!is_quadraticelement2_v<S> && std::is_constructible_v<S, T>)
         [[nodiscard]] constexpr explicit operator S() const {
-            return _a;
+            return static_cast<S>(_a);
         }
         template<std::floating_point F>
         [[nodiscard]] constexpr explicit operator F() const {
@@ -146,9 +146,10 @@ namespace radicalfield {
             //  c          <=> a+b*sqrt(2)   | -a
             //  c-a        <=>   b*sqrt(2)   | ^2
             // (c-a)*|c-a| <=> 2*b*|b|
+            using std::abs;
             if constexpr (!std::is_floating_point_v<S>) {
                 const auto l = lhs - rhs._a;
-                return l*std::abs(l) <=> 2*rhs._b*std::abs(rhs._b);
+                return l*abs(l) <=> 2*rhs._b*abs(rhs._b);
             } else {
                 return lhs <=> static_cast<S>(rhs);
             }
@@ -158,9 +159,10 @@ namespace radicalfield {
             // a+b*sqrt(2) <=>  c            | -a
             //   b*sqrt(2) <=>  c-a          | ^2
             // 2*b*|b|     <=> (c-a)*|c-a|
+            using std::abs;
             if constexpr (!std::is_floating_point_v<S>) {
                 const auto r = rhs - lhs._a;
-                return 2*lhs._b*std::abs(lhs._b) <=> r*std::abs(r);
+                return 2*lhs._b*abs(lhs._b) <=> r*abs(r);
             } else {
                 return static_cast<S>(lhs) <=> rhs;
             }
@@ -170,9 +172,10 @@ namespace radicalfield {
             //  a+b*sqrt(2) <=>    c+d *sqrt(2)   | -c-b*sqrt(2)
             //  a-c         <=>   (d-b)*sqrt(2)   | ^2
             // (a-c)*|a-c|  <=> 2*(d-b)*|d-b|
+            using std::abs;
             const auto l = lhs._a - rhs._a;
             const auto r = rhs._b - lhs._b;
-            return l*std::abs(l) <=> 2*r*std::abs(r);
+            return l*abs(l) <=> 2*r*abs(r);
         }
         
         
